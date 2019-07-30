@@ -4,13 +4,22 @@ int main() {
 
   //create the window for opengl
   window.create(sf::VideoMode(WIDTH, HEIGHT), "Ray Tracer", sf::Style::Titlebar);
+  window.setMouseCursorVisible(false);
+  window.setMouseCursorGrabbed(true);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
   //set normal coord system
+  glScalef(1.0f, -1.0f, 1.0f);
   glOrtho(0, WIDTH, HEIGHT, 0, 0, 1);
+  glTranslatef(WIDTH / 2, HEIGHT / 2, 0.0f);
   glMatrixMode(GL_MODELVIEW);
+
+  //scene.addObject(Sphere(Vector3d(0, 0, 0), 1000, Vector3d(0, 1, 1)));
+
+  scene.addObject(Sphere(Vector3d(0, 0, 50), 10, Vector3d(1, 0, 0)));
+  scene.addObject(Sphere(Vector3d(10, 10, 35), 6, Vector3d(0, 1, 0)));
 
   //main loop of progam
   bool windowIsOpen = true;
@@ -25,7 +34,7 @@ int main() {
 
     window.display();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0, 0, 0.2, 1);
+    glClearColor(0, 0, 0.1, 1);
 
     framerate(FPS, true);
   }
@@ -35,30 +44,34 @@ int main() {
 
 void mainLoop() {
 
-  sf::Vector2i mouse = sf::Mouse::getPosition(window);
+  static bool inside = true;
 
-  glBegin(GL_POINTS);
-
-  for (int i = -WIDTH/2; i < WIDTH/2; i++) {
-    for (int j = -HEIGHT/2; j < HEIGHT/2; j++) {
-
-      Vector3d c = sphere.color;
-
-      double d = sphere.closestIntersection(Line(Vector3d(0, 0, -900), Vector3d(i, j, 900).normalize()));
-      if (d > 0) {
-        glColor3f(c.x, c.y, c.z);
-        glVertex2i(i + WIDTH/2, j + HEIGHT/2);
-      }
-
-      c = sphere2.color;
-
-      d = sphere2.closestIntersection(Line(Vector3d(0, 0, -900), Vector3d(i, j, 900).normalize()));
-      if (d > 0) {
-        glColor3f(c.x, c.y, c.z);
-        glVertex2i(i + WIDTH / 2, j + HEIGHT / 2);
-      }
-    }
+  //pause if P pressed
+  static KeyDetector keyP(sf::Keyboard::P);
+  if (keyP.typed()) {
+    inside = !inside;
+    window.setMouseCursorVisible(!inside);
+    window.setMouseCursorGrabbed(inside);
   }
 
-  glEnd();
+  //get position of mouse in window
+  sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+  if (inside) {
+
+    //move mouse back to centre of screen
+    sf::Mouse::setPosition(sf::Vector2i(WIDTH/2, HEIGHT/2), window);
+
+    //change camera orientation appropriately
+    scene.view.moveCamera((mousePos.x - WIDTH / 2) * 0.002, (mousePos.y - HEIGHT / 2) * 0.002);
+  }
+
+  //update the position of the camera
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) scene.view.moveRight(1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) scene.view.moveRight(-1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) scene.view.moveForward(1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) scene.view.moveForward(-1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) scene.view.moveUp(1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) scene.view.moveUp(-1);
+
+  scene.drawScene();
 }

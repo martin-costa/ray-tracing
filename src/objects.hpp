@@ -1,6 +1,6 @@
 #pragma once
 
-#include "linearalgebra.hpp"
+#include "vector.hpp"
 
 //class to represent a line in 3d
 class Line {
@@ -30,6 +30,8 @@ public:
   Vector3d color;
 
   double rad;
+
+  Sphere();
 
   Sphere(Vector3d pos, double rad, Vector3d color);
 

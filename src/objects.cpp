@@ -2,7 +2,7 @@
 
 Line::Line(Vector3d orig, Vector3d dir) {
   this->orig = orig;
-  this->dir = dir;
+  this->dir = dir.normalize();
 }
 
 Sphere::Sphere(Vector3d pos, double rad, Vector3d color) {
@@ -10,6 +10,8 @@ Sphere::Sphere(Vector3d pos, double rad, Vector3d color) {
   this->rad = rad;
   this->color = color;
 }
+
+Sphere::Sphere() {}
 
 double Sphere::closestIntersection(Line line) {
   Vector3d CO = line.orig - pos;
