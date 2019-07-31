@@ -16,13 +16,14 @@ int main() {
   glTranslatef(WIDTH / 2, HEIGHT / 2, 0.0f);
   glMatrixMode(GL_MODELVIEW);
 
-  //scene.addObject(Sphere(Vector3d(0, 0, 0), 1000, Vector3d(0, 1, 1)));
+  scene.addObject(Sphere(Vector3d(0, 100, 0), 35, Vector3d(1, 1, 1)));
 
-  scene.addObject(Sphere(Vector3d(0, 0, 50), 10, Vector3d(1, 0, 0)));
+  for (int i = 0; i < 20; i++) {
+    scene.addObject(Sphere(Vector3d(70 * sin(i * 2 * PI / 20), i*10, 70 * cos(i * 2 * PI / 20)), 10, Vector3d(abs(cos(i * 2 * PI / 20)), abs(cos(i * 2 * PI / 20)), abs(sin(i * 2 * PI / 20)))));
+  }
 
-
-  for (int i = 0; i < 329; i++) {
-    scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800 - 400, rand() % 800 - 400), rand() % 15 + 5, Vector3d(1000.0f/(rand() % 1000), 1000.0f / (rand() % 1000), 1000.0f / (rand() % 1000))));
+  for (int i = 0; i < 103; i++) {
+    scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800 - 400, rand() % 800 - 400), rand() % 15 + 5, Vector3d((rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f)));
   }
 
   //main loop of progam
@@ -56,12 +57,6 @@ void mainLoop() {
     inside = !inside;
     window.setMouseCursorVisible(!inside);
     window.setMouseCursorGrabbed(inside);
-  }
-
-  //toggle lights
-  static KeyDetector keyT(sf::Keyboard::T);
-  if (keyT.typed()) {
-    scene.light = !scene.light;
   }
 
   //get position of mouse in window

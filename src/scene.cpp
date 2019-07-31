@@ -72,8 +72,6 @@ void Scene::drawScene() {
 
   rayTracingShader.setUniform("sphereCount", sphereCount);
 
-  rayTracingShader.setUniform("light", light);
-
   rayTracingShader.setUniform("pos", view.pos.toSf());
   rayTracingShader.setUniform("dir", view.dir.toSf());
   rayTracingShader.setUniform("up", view.up.toSf());
@@ -89,9 +87,7 @@ void Scene::drawScene() {
     colors[i] = objects[i].color.toSf();
   }
   rayTracingShader.setUniformArray("spherePositions", positions, sphereCount);
-
   rayTracingShader.setUniformArray("sphereRadii", radii, sphereCount);
-
   rayTracingShader.setUniformArray("sphereColors", colors, sphereCount);
 
   glBegin(GL_QUADS);

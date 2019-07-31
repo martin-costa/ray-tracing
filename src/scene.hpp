@@ -61,8 +61,6 @@ class Scene {
 
 public:
 
-  bool light = true;
-
   //the main camera of the scene
   Camera view;
 
