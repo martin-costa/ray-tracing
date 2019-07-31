@@ -3,6 +3,8 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 
+#include <iostream>
+
 #include <vector>
 
 #include "vector.hpp"
@@ -55,7 +57,11 @@ class Scene {
   //objects
   std::vector<Sphere> objects;
 
+  sf::Shader rayTracingShader;
+
 public:
+
+  bool light = true;
 
   //the main camera of the scene
   Camera view;

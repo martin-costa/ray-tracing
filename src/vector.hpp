@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Graphics.hpp>
 #include <cmath>
 
 //3d real vector
@@ -33,7 +34,7 @@ public:
 
   void operator/=(double a);
 
-  //R^3 vector ops
+  //R^3 vector ops.
   Vector3d normalize();
 
   double magnitude();
@@ -47,4 +48,7 @@ public:
   Vector3d rotZ(double theta);
 
   Vector3d rotateAbout(Vector3d v, double theta);
+
+  //sfml ops.
+  sf::Vector3f toSf();
 };

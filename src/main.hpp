@@ -1,13 +1,15 @@
 #include <iostream>
 
+#include <cstdlib>
+
 #include "scene.hpp"
 #include "framerate.hpp"
 #include "inputdetector.hpp"
 
 #define FPS 60
 
-#define WIDTH 900
-#define HEIGHT 600
+#define WIDTH 1600
+#define HEIGHT 900
 
 int main();
 

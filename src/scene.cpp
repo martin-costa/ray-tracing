@@ -57,38 +57,49 @@ Scene::Scene(int width, int height) {
 
   this->width = width;
   this->height = height;
+
+  rayTracingShader.loadFromFile("raytracingshader.fs", sf::Shader::Fragment);
 }
 
 void Scene::drawScene() {
 
-  float ratio = (float)width / (float)height;
+  sf::Shader::bind(&rayTracingShader);
 
-  glBegin(GL_POINTS);
+  int sphereCount = objects.size();
 
-  for (int i = -width / 2; i < width / 2; i++) {
-    for (int j = -height / 2; j < height / 2; j++) {
+  rayTracingShader.setUniform("width", width);
+  rayTracingShader.setUniform("height", height);
 
-      int index = -1;
-      double d = -1;
+  rayTracingShader.setUniform("sphereCount", sphereCount);
 
-      for (int k = 0; k < objects.size(); k++) {
-        double d2 = objects[k].closestIntersection(Line(view.pos, (view.dir + view.side * (float)i * ratio / (width / 2) + view.up * (float)j / (height / 2))));
-        if (d2 > 0 && (d2 < d || d < 0)) {
-          d = d2;
-          index = k;
-        }
-      }
+  rayTracingShader.setUniform("light", light);
 
-      if (d > 0) {
-        Vector3d v = view.pos + (view.dir + view.side * (float)i * ratio / (width / 2) + view.up * (float)j / (height / 2)).normalize() * d;
-        double f = (v - objects[index].pos).normalize().dot(Vector3d(0, 1, 0));
+  rayTracingShader.setUniform("pos", view.pos.toSf());
+  rayTracingShader.setUniform("dir", view.dir.toSf());
+  rayTracingShader.setUniform("up", view.up.toSf());
+  rayTracingShader.setUniform("side", view.side.toSf());
 
-        Vector3d c = objects[index].color;
-        glColor3f(c.x * f, c.y * f, c.z * f);
-        glVertex2i(i, j);
-      }
-    }
+  sf::Vector3f* positions = new sf::Vector3f[sphereCount]();
+  float* radii = new float[sphereCount]();
+  sf::Vector3f* colors = new sf::Vector3f[sphereCount]();
+
+  for (int i = 0; i < sphereCount; i++) {
+    positions[i] = objects[i].pos.toSf();
+    radii[i] = objects[i].rad;
+    colors[i] = objects[i].color.toSf();
   }
+  rayTracingShader.setUniformArray("spherePositions", positions, sphereCount);
+
+  rayTracingShader.setUniformArray("sphereRadii", radii, sphereCount);
+
+  rayTracingShader.setUniformArray("sphereColors", colors, sphereCount);
+
+  glBegin(GL_QUADS);
+
+  glVertex2i(-width / 2, -height/2);
+  glVertex2i(width / 2, -height / 2);
+  glVertex2i(width / 2, height / 2);
+  glVertex2i(-width / 2, height / 2);
 
   glEnd();
 }

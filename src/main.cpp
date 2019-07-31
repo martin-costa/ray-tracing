@@ -19,7 +19,11 @@ int main() {
   //scene.addObject(Sphere(Vector3d(0, 0, 0), 1000, Vector3d(0, 1, 1)));
 
   scene.addObject(Sphere(Vector3d(0, 0, 50), 10, Vector3d(1, 0, 0)));
-  scene.addObject(Sphere(Vector3d(10, 10, 35), 6, Vector3d(0, 1, 0)));
+
+
+  for (int i = 0; i < 329; i++) {
+    scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800 - 400, rand() % 800 - 400), rand() % 15 + 5, Vector3d(1000.0f/(rand() % 1000), 1000.0f / (rand() % 1000), 1000.0f / (rand() % 1000))));
+  }
 
   //main loop of progam
   bool windowIsOpen = true;
@@ -52,6 +56,12 @@ void mainLoop() {
     inside = !inside;
     window.setMouseCursorVisible(!inside);
     window.setMouseCursorGrabbed(inside);
+  }
+
+  //toggle lights
+  static KeyDetector keyT(sf::Keyboard::T);
+  if (keyT.typed()) {
+    scene.light = !scene.light;
   }
 
   //get position of mouse in window

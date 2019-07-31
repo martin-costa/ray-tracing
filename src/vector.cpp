@@ -58,7 +58,7 @@ void Vector3d::operator/=(double a) {
   z /= a;
 }
 
-//R^3 vector ops
+//R^3 vector ops.
 Vector3d Vector3d::normalize() {
   return (*this) / magnitude();
 }
@@ -97,3 +97,9 @@ Vector3d Vector3d::rotateAbout(Vector3d v, double theta) {
 
   return Vector3d(ux, uy, uz);
 }
+
+//sfml ops.
+sf::Vector3f Vector3d::toSf() {
+  return sf::Vector3f(x, y, z);
+}
+
