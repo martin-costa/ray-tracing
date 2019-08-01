@@ -16,12 +16,11 @@ int main() {
   glTranslatef(WIDTH / 2, HEIGHT / 2, 0.0f);
   glMatrixMode(GL_MODELVIEW);
 
+  //SCENE 1
   scene.addObject(Sphere(Vector3d(0, 100, 0), 35, Vector3d(1, 1, 1)));
-
   for (int i = 0; i < 20; i++) {
     scene.addObject(Sphere(Vector3d(70 * sin(i * 2 * PI / 20), i*10, 70 * cos(i * 2 * PI / 20)), 10, Vector3d(abs(cos(i * 2 * PI / 20)), abs(cos(i * 2 * PI / 20)), abs(sin(i * 2 * PI / 20)))));
   }
-
   for (int i = 0; i < 103; i++) {
     scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800 - 400, rand() % 800 - 400), rand() % 15 + 5, Vector3d((rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f)));
   }
@@ -73,7 +72,10 @@ void mainLoop() {
   //update the position of the camera
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) scene.view.moveRight(1);
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) scene.view.moveRight(-1);
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) scene.view.moveForward(1);
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) scene.view.moveForward(3);
+    else scene.view.moveForward(1);
+  }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) scene.view.moveForward(-1);
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) scene.view.moveUp(1);
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) scene.view.moveUp(-1);
