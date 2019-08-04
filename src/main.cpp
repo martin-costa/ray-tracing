@@ -21,9 +21,10 @@ int main() {
   for (int i = 0; i < 20; i++) {
     scene.addObject(Sphere(Vector3d(70 * sin(i * 2 * PI / 20), i*10, 70 * cos(i * 2 * PI / 20)), 10, Vector3d(abs(cos(i * 2 * PI / 20)), abs(cos(i * 2 * PI / 20)), abs(sin(i * 2 * PI / 20)))));
   }
-  for (int i = 0; i < 103; i++) {
-    scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800 - 400, rand() % 800 - 400), rand() % 15 + 5, Vector3d((rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f)));
+  for (int i = 0; i < 100; i++) {
+    scene.addObject(Sphere(Vector3d(rand() % 800 - 400, rand() % 800, rand() % 800 - 400), rand() % 15 + 5, Vector3d((rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f)));
   }
+  scene.addObject(Sphere(Vector3d(0, 180, 20), 15, Vector3d(1, 0, 1)));
 
   //main loop of progam
   bool windowIsOpen = true;
@@ -38,7 +39,7 @@ int main() {
 
     window.display();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0, 0, 0.1, 1);
+    //glClearColor(0, 0, 0.1, 1);
 
     framerate(FPS, true);
   }

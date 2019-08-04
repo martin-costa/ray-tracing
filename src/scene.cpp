@@ -90,6 +90,10 @@ void Scene::drawScene() {
   rayTracingShader.setUniformArray("sphereRadii", radii, sphereCount);
   rayTracingShader.setUniformArray("sphereColors", colors, sphereCount);
 
+  delete[] positions;
+  delete[] radii;
+  delete[] colors;
+
   glBegin(GL_QUADS);
 
   glVertex2i(-width / 2, -height/2);
