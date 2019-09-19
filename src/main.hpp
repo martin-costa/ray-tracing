@@ -8,8 +8,8 @@
 
 #define FPS 60
 
-#define WIDTH 1600
-#define HEIGHT 900
+#define WIDTH 1920
+#define HEIGHT 1080
 
 int main();
 
@@ -17,4 +17,7 @@ void mainLoop();
 
 sf::Window window;
 
+// create a scene and a view
 Scene scene(WIDTH, HEIGHT);
+
+Camera view;

@@ -1,6 +1,6 @@
 #include "scene.hpp"
 
-//// __ Camera used to define viewing position __ ////
+//// __ camera used to define viewing position __ ////
 
 Camera::Camera() : Camera(Vector3d()) {}
 
@@ -20,7 +20,7 @@ void Camera::moveCamera(double deltaTheta, double deltaPhi) {
   lookUp(deltaPhi);
   lookRight(deltaTheta);
 
-  side = Vector3d(1 ,0 , 0).rotY(theta);
+  side = Vector3d(1, 0, 0).rotY(theta);
   up = Vector3d(0, 1, 0).rotY(theta).rotateAbout(side, phi);
   dir = Vector3d(0, 0, 1).rotY(theta).rotateAbout(side, phi);
 }
@@ -50,10 +50,10 @@ void Camera::moveForward(double x) {
   pos += dirxz.normalize() * x;
 }
 
-//// __ Scene used to define the space __ ////
+//// __ scene used to define the space __ ////
 
 Scene::Scene(int width, int height) {
-  this->objects = std::vector<Sphere>(0);
+  this->spheres = std::vector<Sphere>(0);
 
   this->width = width;
   this->height = height;
@@ -61,38 +61,66 @@ Scene::Scene(int width, int height) {
   rayTracingShader.loadFromFile("raytracingshader.fs", sf::Shader::Fragment);
 }
 
-void Scene::drawScene() {
+void Scene::drawScene(Camera cam) {
 
   sf::Shader::bind(&rayTracingShader);
 
-  int sphereCount = objects.size();
-
+  // set scene size and camera
   rayTracingShader.setUniform("width", width);
   rayTracingShader.setUniform("height", height);
 
+  rayTracingShader.setUniform("pos", cam.pos.toSf());
+  rayTracingShader.setUniform("dir", cam.dir.toSf());
+  rayTracingShader.setUniform("up", cam.up.toSf());
+  rayTracingShader.setUniform("side", cam.side.toSf());
+
+  // set up spheres
+  int sphereCount = spheres.size();
   rayTracingShader.setUniform("sphereCount", sphereCount);
 
-  rayTracingShader.setUniform("pos", view.pos.toSf());
-  rayTracingShader.setUniform("dir", view.dir.toSf());
-  rayTracingShader.setUniform("up", view.up.toSf());
-  rayTracingShader.setUniform("side", view.side.toSf());
-
-  sf::Vector3f* positions = new sf::Vector3f[sphereCount]();
-  float* radii = new float[sphereCount]();
-  sf::Vector3f* colors = new sf::Vector3f[sphereCount]();
+  sf::Vector3f* spherePositions = new sf::Vector3f[sphereCount]();
+  sf::Vector3f* sphereColors = new sf::Vector3f[sphereCount]();
+  float* sphereRadii = new float[sphereCount]();
 
   for (int i = 0; i < sphereCount; i++) {
-    positions[i] = objects[i].pos.toSf();
-    radii[i] = objects[i].rad;
-    colors[i] = objects[i].color.toSf();
+    spherePositions[i] = spheres[i].pos.toSf();
+    sphereColors[i] = spheres[i].color.toSf();
+    sphereRadii[i] = spheres[i].rad;
   }
-  rayTracingShader.setUniformArray("spherePositions", positions, sphereCount);
-  rayTracingShader.setUniformArray("sphereRadii", radii, sphereCount);
-  rayTracingShader.setUniformArray("sphereColors", colors, sphereCount);
+  rayTracingShader.setUniformArray("spherePositions", spherePositions, sphereCount);
+  rayTracingShader.setUniformArray("sphereRadii", sphereRadii, sphereCount);
+  rayTracingShader.setUniformArray("sphereColors", sphereColors, sphereCount);
 
-  delete[] positions;
-  delete[] radii;
-  delete[] colors;
+  // set up triangles
+  int triangleCount = triangles.size();
+  rayTracingShader.setUniform("triangleCount", triangleCount);
+
+  sf::Vector3f* triP1 = new sf::Vector3f[triangleCount]();
+  sf::Vector3f* triP2 = new sf::Vector3f[triangleCount]();
+  sf::Vector3f* triP3 = new sf::Vector3f[triangleCount]();
+  sf::Vector3f* triangleColors = new sf::Vector3f[triangleCount]();
+
+  for (int i = 0; i < triangleCount; i++) {
+    triP1[i] = triangles[i].p1.toSf();
+    triP2[i] = triangles[i].p2.toSf();
+    triP3[i] = triangles[i].p3.toSf();
+    triangleColors[i] = triangles[i].color.toSf();
+  }
+  rayTracingShader.setUniformArray("triP1", triP1, triangleCount);
+  rayTracingShader.setUniformArray("triP2", triP2, triangleCount);
+  rayTracingShader.setUniformArray("triP3", triP3, triangleCount);
+
+  rayTracingShader.setUniformArray("triangleColors", triangleColors, triangleCount);
+
+  // free the memory
+  delete[] spherePositions;
+  delete[] sphereRadii;
+  delete[] sphereColors;
+
+  delete[] triP1;
+  delete[] triP2;
+  delete[] triP3;
+  delete[] triangleColors;
 
   glBegin(GL_QUADS);
 
@@ -104,6 +132,7 @@ void Scene::drawScene() {
   glEnd();
 }
 
-void Scene::addObject(Sphere sphere) {
-  objects.push_back(sphere);
-}
+// add objects to the scene
+void Scene::addObject(Sphere sphere) { spheres.push_back(sphere); }
+
+void Scene::addObject(Triangle triangle) { triangles.push_back(triangle); }
