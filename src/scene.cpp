@@ -65,6 +65,11 @@ void Scene::drawScene(Camera cam) {
 
   sf::Shader::bind(&rayTracingShader);
 
+  // create a timer to evolve time in shader
+  static int time = 0;
+  time++;
+  rayTracingShader.setUniform("time", time);
+
   // set scene size and camera
   rayTracingShader.setUniform("width", width);
   rayTracingShader.setUniform("height", height);
@@ -73,6 +78,13 @@ void Scene::drawScene(Camera cam) {
   rayTracingShader.setUniform("dir", cam.dir.toSf());
   rayTracingShader.setUniform("up", cam.up.toSf());
   rayTracingShader.setUniform("side", cam.side.toSf());
+
+  // settings
+  rayTracingShader.setUniform("atten", attenuation);
+  rayTracingShader.setUniform("reflectivity", reflectivity);
+  rayTracingShader.setUniform("diffuse", diffuse);
+
+  rayTracingShader.setUniform("voidColor", voidColor.toSf());
 
   // set up spheres
   int sphereCount = spheres.size();
@@ -101,9 +113,9 @@ void Scene::drawScene(Camera cam) {
   sf::Vector3f* triangleColors = new sf::Vector3f[triangleCount]();
 
   for (int i = 0; i < triangleCount; i++) {
-    triP1[i] = triangles[i].p1.toSf();
-    triP2[i] = triangles[i].p2.toSf();
-    triP3[i] = triangles[i].p3.toSf();
+    triP1[i] = triangles[i].p[0].toSf();
+    triP2[i] = triangles[i].p[1].toSf();
+    triP3[i] = triangles[i].p[2].toSf();
     triangleColors[i] = triangles[i].color.toSf();
   }
   rayTracingShader.setUniformArray("triP1", triP1, triangleCount);
@@ -111,6 +123,35 @@ void Scene::drawScene(Camera cam) {
   rayTracingShader.setUniformArray("triP3", triP3, triangleCount);
 
   rayTracingShader.setUniformArray("triangleColors", triangleColors, triangleCount);
+
+  // set up the lights
+  int dirLightCount = this->dirLights.size();
+  int pointLightCount = this->pointLights.size();
+
+  sf::Vector3f* dirLights = new sf::Vector3f[dirLightCount]();
+  sf::Vector3f* pointLights = new sf::Vector3f[pointLightCount]();
+
+  sf::Vector3f* dirLightsColors = new sf::Vector3f[dirLightCount]();
+  sf::Vector3f* pointLightsColors = new sf::Vector3f[pointLightCount]();
+
+  for (int i = 0; i < dirLightCount; i++) {
+    dirLights[i] = this->dirLights[i].dir.toSf();
+    dirLightsColors[i] = this->dirLights[i].color.toSf();
+  }
+
+  for (int i = 0; i < pointLightCount; i++) {
+    pointLights[i] = this->pointLights[i].pos.toSf();
+    pointLightsColors[i] = this->pointLights[i].color.toSf();
+  }
+
+  rayTracingShader.setUniform("dirLightCount", dirLightCount);
+  rayTracingShader.setUniform("pointLightCount", pointLightCount);
+
+  rayTracingShader.setUniformArray("dirLights", dirLights, dirLightCount);
+  rayTracingShader.setUniformArray("pointLights", pointLights, pointLightCount);
+
+  rayTracingShader.setUniformArray("dirLightsColors", dirLightsColors, dirLightCount);
+  rayTracingShader.setUniformArray("pointLightsColors", pointLightsColors, pointLightCount);
 
   // free the memory
   delete[] spherePositions;
@@ -121,6 +162,11 @@ void Scene::drawScene(Camera cam) {
   delete[] triP2;
   delete[] triP3;
   delete[] triangleColors;
+
+  delete[] dirLights;
+  delete[] pointLights;
+  delete[] dirLightsColors;
+  delete[] pointLightsColors;
 
   glBegin(GL_QUADS);
 
@@ -136,3 +182,16 @@ void Scene::drawScene(Camera cam) {
 void Scene::addObject(Sphere sphere) { spheres.push_back(sphere); }
 
 void Scene::addObject(Triangle triangle) { triangles.push_back(triangle); }
+
+void Scene::addObject(TriangleArray triangleArray) { 
+
+  std::vector<Triangle> tris = triangleArray.getTriangles();
+
+  for (int i = 0; i < tris.size(); i++) {
+    addObject(tris[i]);
+  }
+}
+
+void Scene::addObject(DirectionalLight dirLight) { dirLights.push_back(dirLight); }
+
+void Scene::addObject(PointLight pointLight) { pointLights.push_back(pointLight); }

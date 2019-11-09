@@ -4,7 +4,9 @@
 
 //// __ the objects that can be put into the scene __ ////
 
-// a light that casts rays in all directions
+//// __ light (creating) objects __ ////
+
+// a point that casts light rays in all directions
 class PointLight {
 public:
 
@@ -12,10 +14,33 @@ public:
 
   Vector3d color;
 
+  int brightness; // in [0, 1]
+
   PointLight(Vector3d pos, Vector3d color);
+
+  PointLight(Vector3d pos);
 
   PointLight();
 };
+
+// a direction where light rays are cast in parallel
+class DirectionalLight {
+public:
+
+  Vector3d dir;
+
+  Vector3d color;
+
+  int brightness; // in [0, 1]
+
+  DirectionalLight(Vector3d dir, Vector3d color);
+
+  DirectionalLight(Vector3d dir);
+
+  DirectionalLight();
+};
+
+//// __ opaque reflective objects __ ////
 
 // a sphere
 class Sphere {
@@ -36,11 +61,32 @@ public:
 class Triangle {
 public:
 
-  Vector3d p1, p2, p3;
+  Vector3d p[3];
 
   Vector3d color;
 
   Triangle(Vector3d p1, Vector3d p2, Vector3d p3, Vector3d color);
 
   Triangle();
+};
+
+// a triangle array
+class TriangleArray {
+public:
+
+  Vector3d* vertices;
+
+  int* indices;
+
+  int vertexCount;
+
+  int indexCount;
+
+  Vector3d color;
+
+  TriangleArray(Vector3d* vertices, int vertexCount, int* indices, int indexCount, Vector3d color);
+
+  TriangleArray();
+
+  std::vector<Triangle> getTriangles();
 };

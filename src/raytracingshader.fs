@@ -4,6 +4,8 @@
 //// ------------------ ////
 
 const int maxObjects = 130;
+const int maxLights = 20;
+
 const int maxCastCount = 6;
 
 // the types of scene objects [VOID: -1, SPHERE: 0, FLOOR: 1, TRIANGLE: 2]
@@ -18,7 +20,7 @@ uniform int width;
 uniform int height;
 
 uniform float reflectivity = 0.6;
-uniform float diffuse = 0.2;
+uniform float diffuse = 0.25;
 
 // camera position and orientation
 uniform vec3 pos;
@@ -28,9 +30,11 @@ uniform vec3 up;
 uniform vec3 side;
 
 // the data for the scene objects
+uniform int time = 0;
+uniform float atten = 1000;
 
 // color of the void
-uniform vec3 voidColor = vec3(0, 0, 0.07);
+uniform vec3 voidColor = vec3(0, 0.05, 0.2);
 
 // spheres
 uniform int sphereCount = 0;
@@ -49,13 +53,21 @@ uniform vec3 triP3[maxObjects];
 
 uniform vec3 triangleColors[maxObjects];
 
+// lights
+uniform int dirLightCount = 0;
+uniform int pointLightCount = 0;
+
+uniform vec3 dirLights[maxLights];
+uniform vec3 pointLights[maxLights];
+
+uniform vec3 dirLightsColors[maxLights];
+uniform vec3 pointLightsColors[maxLights];
+
 //// ---------------- ////
 //// global variables ////
 //// ---------------- ////
 
 // stores the object color and color at each collision point
-vec3[maxCastCount] colorOfObject;
-vec3[maxCastCount] colorFromLight;
 vec3[maxCastCount] totalColor;
 
 // parameter determines how far the intersection is
@@ -83,6 +95,13 @@ int objectType = 0;
 //// functions to compute pixel color ////
 //// -------------------------------- ////
 
+//// __ blending functions __ ////
+
+// gets the vector with min at each pos
+vec3 eltWiseMin(vec3 u, vec3 v) {
+  return vec3(min(u.x, v.x), min(u.y, v.y), min(u.z, v.z));
+}
+
 //// __ methods for sphere __ ////
 
 // method to get intersection of line and sphere
@@ -101,7 +120,9 @@ float getIntersectionSphere(vec3 origin, vec3 dir, int idx) {
 
 // method to get the normal to sphere
 vec3 getNormalSphere() {
-  return normalize(rayEnd - spherePositions[index]);
+  vec3 normal = normalize(rayEnd - spherePositions[index]);
+  if (dot(normal, rayDir) < 0) return normal;
+  return -normal;
 }
 
 //// __ methods for triangle __ ////
@@ -143,12 +164,31 @@ vec3 getNormalTriangle() {
 
 // method to get intersection of line and floor
 float getIntersectionFloor(vec3 origin, vec3 dir) {
+  if (dir.y == 0) return -1;
   return -origin.y / dir.y;
 }
 
-// method to get the normal to sphere
+// method to get the normal to floor
 vec3 getNormalFloor() {
-  return vec3(0, 1, 0);
+  if (dot(vec3(0, 1, 0), rayDir) < 0) return vec3(0, 1, 0);
+  return vec3(0, -1, 0);
+}
+
+// sqaure tile pattern
+int squareTiles(float x, float y) {
+  vec2 pos = vec2(int(x) % 51, int(y) % 51);
+  int t = 0;
+
+  if (pos.x >= 25) t++;
+  if (pos.y >= 25) t++;
+  if (t % 2 == 0) return 1;
+  return 0;
+}
+
+// concentric circles pattern
+int concentricCircles(float x, float y) {
+  if (int(sqrt(x*x + y*y) - time) % 51 > 25) return 1;
+  return 0;
 }
 
 //// __ methods for all objects __ ////
@@ -158,8 +198,27 @@ vec3 getNormal() {
   if (objectType == SPHERE_OBJ) return getNormalSphere();
   if (objectType == TRIANGLE_OBJ) return getNormalTriangle();
   if (objectType == FLOOR_OBJ) return getNormalFloor();
-
   return vec3(1, 0, 0);
+}
+
+// gets the intersection given the obj type
+float getIntersection(vec3 origin, vec3 dir, int idx, int objType) {
+  if (objType == SPHERE_OBJ) return getIntersectionSphere(origin, dir, idx);
+  if (objType == TRIANGLE_OBJ) return getIntersectionTriangle(origin, dir, idx);
+  if (objType == FLOOR_OBJ) return getIntersectionFloor(origin, dir);
+  return -1;
+}
+
+// checks all objects of a certain type for closest intersection
+void checkShape(vec3 origin, vec3 dir, int objType, int objCount) {
+  for (int i = 0; i < objCount; i++) {
+	float d2 = getIntersection(origin, dir, i, objType);
+    if (d2 > 0 && (d2 < d || d < 0)) {
+      d = d2;
+      index = i;
+	  objectType = objType;
+    }
+  }
 }
 
 // method to get closest intersection of a ray of light
@@ -173,38 +232,39 @@ int getClosestIntersection(vec3 origin, vec3 dir) {
   objectType = VOID_OBJ;
 
   // check spheres
-  for (int i = 0; i < sphereCount; i++) {
-	float d2 = getIntersectionSphere(origin, dir, i);
-    if (d2 > 0 && (d2 < d || d < 0)) {
-      d = d2;
-      index = i;
-	  objectType = SPHERE_OBJ;
-    }
-  }
-
-  // check triangle
-  for (int i = 0; i < triangleCount; i++) {
-	float d2 = getIntersectionTriangle(origin, dir, i);
-    if (d2 > 0 && (d2 < d || d < 0)) {
-      d = d2;
-      index = i;
-	  objectType = TRIANGLE_OBJ;
-    }
-  }
-
-  // check floor
-  float d2 = getIntersectionFloor(origin, dir);
-  if (d2 > 0 && (d2 < d || d < 0)) {
-    d = d2;
-	objectType = FLOOR_OBJ;
-  }
+  checkShape(origin, dir, SPHERE_OBJ, sphereCount);
+  checkShape(origin, dir, TRIANGLE_OBJ, triangleCount);
+  checkShape(origin, dir, FLOOR_OBJ, 1);
 
   return objectType;
 }
 
 // method to get if point in shade
-bool getShadow(vec3 origin, vec3 dir) {
-  return getClosestIntersection(origin, dir) != VOID_OBJ;
+bool getShadow(vec3 origin, vec3 dir, float dist) {
+
+  origin += dir * 0.01;
+  float d2 = -1;
+
+  // check spheres
+  for (int i = 0; i < sphereCount; i++) {
+    d2 = getIntersectionSphere(origin, dir, i);
+    if (d2 > 0 && dist < 0) return true;
+	if (d2 > 0 && dist > 0 && d2 < dist) return true;
+  }
+
+  // check triangle
+  for (int i = 0; i < triangleCount; i++) {
+    d2 = getIntersectionTriangle(origin, dir, i);
+    if (d2 > 0 && dist < 0) return true;
+	if (d2 > 0 && dist > 0 && d2 < dist) return true;
+  }
+
+  // check floor
+  d2 = getIntersectionFloor(origin, dir);
+  if (d2 > 0 && dist < 0) return true;
+  if (d2 > 0 && dist > 0 && d2 < dist) return true;
+
+  return false;
 }
 
 //// -------------------------------------- ////
@@ -224,40 +284,30 @@ bool traceRay() {
 	return false;
   }
 
-  // if a sphere is hit by the ray
-  else if (objectType == SPHERE_OBJ) {
-    colorFromLight[casts] = sphereColors[index] * max(0, dot(normal, normalize(vec3(0, 1, 0))));
-	colorOfObject[casts] = sphereColors[index];
+  vec3 objColor = 0;
+  vec3 colorFromLight = 0;
+
+  // set objColor to the color of the obj hit
+  if (objectType == SPHERE_OBJ) objColor = sphereColors[index];
+  if (objectType == TRIANGLE_OBJ) objColor = triangleColors[index];
+  if (objectType == FLOOR_OBJ) {
+	if (concentricCircles(rayEnd.x, rayEnd.z) == 0) objColor = vec3(0, 0, 0);
+	else objColor = vec3(1, 1, 1);
   }
 
-  // if a triangle is hit by the ray
-  else if (objectType == TRIANGLE_OBJ) {
-    colorFromLight[casts] = triangleColors[index] * max(0, dot(normal, normalize(vec3(0, 1, 0))));
-	colorOfObject[casts] = triangleColors[index];
-  }
-  
-  // if the floor is hit by the ray
-  else if (objectType == FLOOR_OBJ) {
-    vec2 tile = vec2(int(rayEnd.x) % 51, int(rayEnd.z) % 51);
-    int t = 0;
+  // get the light coming from directed lights
+  for (int i = 0; i < dirLightCount; i++)
+    if ( !getShadow(rayEnd, normalize(-dirLights[i]), -1) ) colorFromLight += eltWiseMin(objColor, dirLightsColors[i]) * max(0, dot(normal, normalize(-dirLights[i])));
 
-    if (tile.x >= 25) t++;
-    if (tile.y >= 25) t++;
-    if (t % 2 == 0) {
-      colorFromLight[casts] = vec3(0.05, 0.05, 0.05);
-	  colorOfObject[casts] = vec3(0, 0, 0);
-	}
-    else {
-      colorFromLight[casts] = vec3(0.75, 0.75, 0.75);
-	  colorOfObject[casts] = vec3(1, 1, 1);
-	}
+  // get the light coming from point lights
+  for (int i = 0; i < pointLightCount; i++) {
+    vec3 diff = pointLights[i]-rayEnd;
+	float mag = length(diff);
+    if ( !getShadow(rayEnd, normalize(diff), mag) ) colorFromLight += eltWiseMin(objColor, pointLightsColors[i]) * max(0, dot(normal, normalize(diff)) * atten / (mag * mag));
   }
-
-  // get if object is in the shade
-  if ( getShadow(rayEnd, normalize( vec3(0, pos.y, 0) )) ) colorFromLight[casts] = vec3(0, 0, 0);
 
   // add up the direct color at the point
-  totalColor[casts] = colorFromLight[casts] + colorOfObject[casts] * diffuse;
+  totalColor[casts] = colorFromLight + eltWiseMin(objColor, voidColor) * diffuse;
 
   // update the direction and the origin of the ray
   rayDir = rayDir - normal * 2 * dot(normal , rayDir);

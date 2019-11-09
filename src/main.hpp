@@ -8,10 +8,12 @@
 
 #define FPS 60
 
-#define WIDTH 1920
+#define WIDTH 1980
 #define HEIGHT 1080
 
 int main();
+
+void launch();
 
 void mainLoop();
 
@@ -20,4 +22,4 @@ sf::Window window;
 // create a scene and a view
 Scene scene(WIDTH, HEIGHT);
 
-Camera view;
+Camera view(Vector3d(-200, 400, 200));

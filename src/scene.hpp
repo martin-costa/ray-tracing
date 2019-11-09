@@ -58,9 +58,20 @@ class Scene {
 
 public:
 
+  // settings
+  float attenuation = 5000;
+  float reflectivity = 0.6;
+  float diffuse = 0.25;
+
+  Vector3d voidColor = Vector3d(0, 0.05, 0.1);
+
   // objects
   std::vector<Sphere> spheres;
   std::vector<Triangle> triangles;
+
+  // lights
+  std::vector<DirectionalLight> dirLights;
+  std::vector<PointLight> pointLights;
 
   Scene(int width, int height);
 
@@ -69,4 +80,8 @@ public:
   // add objects to the scene
   void addObject(Sphere sphere);
   void addObject(Triangle triangle);
+  void addObject(TriangleArray triangleArray);
+
+  void addObject(DirectionalLight dirLights);
+  void addObject(PointLight pointLights);
 };
