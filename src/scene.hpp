@@ -55,15 +55,16 @@ class Scene {
    int height;
 
   sf::Shader rayTracingShader;
+  sf::Texture sky;
 
 public:
 
   // settings
   float attenuation = 5000;
-  float reflectivity = 0.6;
-  float diffuse = 0.25;
+  float reflectivity = 1;
+  float diffuse = 0.1;
 
-  Vector3d voidColor = Vector3d(0, 0.05, 0.1);
+  Vector3d voidColor = Vector3d(0, 0.02, 0.04);
 
   // objects
   std::vector<Sphere> spheres;

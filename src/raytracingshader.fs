@@ -1,9 +1,10 @@
+//#version 430
 
 //// ------------------ ////
 //// constant variables ////
 //// ------------------ ////
 
-const int maxObjects = 130;
+const int maxObjects = 50;
 const int maxLights = 20;
 
 const int maxCastCount = 6;
@@ -19,8 +20,8 @@ const int VOID_OBJ = -1, SPHERE_OBJ = 0, FLOOR_OBJ = 1, TRIANGLE_OBJ = 2;
 uniform int width;
 uniform int height;
 
-uniform float reflectivity = 0.6;
-uniform float diffuse = 0.25;
+uniform float reflectivity = 0;
+uniform float diffuse = 0;
 
 // camera position and orientation
 uniform vec3 pos;
@@ -63,6 +64,9 @@ uniform vec3 pointLights[maxLights];
 uniform vec3 dirLightsColors[maxLights];
 uniform vec3 pointLightsColors[maxLights];
 
+// textures
+uniform sampler2D sky;
+
 //// ---------------- ////
 //// global variables ////
 //// ---------------- ////
@@ -83,7 +87,7 @@ int casts = 0;
 vec3 rayOrigin = pos;
 
 // direction of ray being traced
-vec3 rayDir = normalize(dir + side * (gl_FragCoord.x - float(width) / 2.0) * 2.0 / float(height) + up * (gl_FragCoord.y - float(height) / 2.0) * 2.0 / float(height));
+vec3 rayDir = normalize(dir + side * (gl_FragCoord.x * 2 - width) / float(height) + up * (gl_FragCoord.y * 2 - height) / float(height));
 
 // end point of ray being traced
 vec3 rayEnd = pos;
@@ -176,11 +180,15 @@ vec3 getNormalFloor() {
 
 // sqaure tile pattern
 int squareTiles(float x, float y) {
-  vec2 pos = vec2(int(x) % 51, int(y) % 51);
+  float s = 5; int r = 4;
+  vec2 pos = vec2(int(x/s) % r, int(y/s) % r);
   int t = 0;
 
-  if (pos.x >= 25) t++;
-  if (pos.y >= 25) t++;
+  if ((x < 0) ^ (y < 0)) t++;
+
+  if (pos.x >= 1) t++;
+  if (pos.y >= 1) t++;
+
   if (t % 2 == 0) return 1;
   return 0;
 }
@@ -189,6 +197,20 @@ int squareTiles(float x, float y) {
 int concentricCircles(float x, float y) {
   if (int(sqrt(x*x + y*y) - time) % 51 > 25) return 1;
   return 0;
+}
+
+//// __ methods for void __ ////
+
+// get the sky texture
+vec4 getSky() {
+  float pi = 3.14159;
+
+  float phi = acos(rayDir.y/length(rayDir));
+  float theta = atan2(rayDir.z, rayDir.x);
+
+  vec2 pos = vec2(0.5, 0.5) + 0.99 * vec2(cos(theta), sin(theta)) * phi/pi;
+
+  return texture2D(sky, pos) * dot(normalize(dirLights[0]), vec3(0, -1, 0));
 }
 
 //// __ methods for all objects __ ////
@@ -280,7 +302,7 @@ bool traceRay() {
 
   // if ray goes into void
   if (objectType == VOID_OBJ) {
-    totalColor[casts] = voidColor;
+    totalColor[casts] = getSky();
 	return false;
   }
 
@@ -291,8 +313,8 @@ bool traceRay() {
   if (objectType == SPHERE_OBJ) objColor = sphereColors[index];
   if (objectType == TRIANGLE_OBJ) objColor = triangleColors[index];
   if (objectType == FLOOR_OBJ) {
-	if (concentricCircles(rayEnd.x, rayEnd.z) == 0) objColor = vec3(0, 0, 0);
-	else objColor = vec3(1, 1, 1);
+	if (squareTiles(rayEnd.x, rayEnd.z) == 0) objColor = vec3(0, 0.8, 0.8);
+	else objColor = vec3(0.8, 0.3, 0);
   }
 
   // get the light coming from directed lights
@@ -307,7 +329,9 @@ bool traceRay() {
   }
 
   // add up the direct color at the point
-  totalColor[casts] = colorFromLight + eltWiseMin(objColor, voidColor) * diffuse;
+  totalColor[casts] = colorFromLight + objColor * diffuse;
+
+  if (objectType == FLOOR_OBJ) return false; // floor non reflective
 
   // update the direction and the origin of the ray
   rayDir = rayDir - normal * 2 * dot(normal , rayDir);
@@ -323,7 +347,7 @@ bool traceRay() {
 vec3 collapseRays() {
 
   // for each bounce of the ray
-  for (int i = casts - 1; i > 0; i--) {
+  for (int i = casts; i > 0; i--) {
     totalColor[i - 1] += totalColor[i] * reflectivity;
   }
   return totalColor[0];

@@ -2,25 +2,27 @@
 
 #include <iostream>
 
-PointLight::PointLight(Vector3d pos, Vector3d color) {
+typedef Vector3d vec;
+
+PointLight::PointLight(vec pos, vec color) {
   this->pos = pos;
   this->color = color;
 }
 
-PointLight::PointLight(Vector3d pos) : PointLight(pos, Vector3d(1,1,1)) {}
+PointLight::PointLight(vec pos) : PointLight(pos, vec(1,1,1)) {}
 
 PointLight::PointLight() {}
 
-DirectionalLight::DirectionalLight(Vector3d dir, Vector3d color) {
+DirectionalLight::DirectionalLight(vec dir, vec color) {
   this->dir = dir;
   this->color = color;
 }
 
-DirectionalLight::DirectionalLight(Vector3d dir) : DirectionalLight(dir, Vector3d(1, 1, 1)) {}
+DirectionalLight::DirectionalLight(vec dir) : DirectionalLight(dir, vec(1, 1, 1)) {}
 
 DirectionalLight::DirectionalLight() {}
 
-Sphere::Sphere(Vector3d pos, double rad, Vector3d color) {
+Sphere::Sphere(vec pos, double rad, vec color) {
   this->pos = pos;
   this->rad = rad;
   this->color = color;
@@ -28,7 +30,7 @@ Sphere::Sphere(Vector3d pos, double rad, Vector3d color) {
 
 Sphere::Sphere() {}
 
-Triangle::Triangle(Vector3d p1, Vector3d p2, Vector3d p3, Vector3d color) {
+Triangle::Triangle(vec p1, vec p2, vec p3, vec color) {
   this->p[0] = p1;
   this->p[1] = p2;
   this->p[2] = p3;
@@ -37,17 +39,27 @@ Triangle::Triangle(Vector3d p1, Vector3d p2, Vector3d p3, Vector3d color) {
 
 Triangle::Triangle() {}
 
-TriangleArray::TriangleArray(Vector3d* vertices, int vertexCount, int* indices, int indexCount, Vector3d color) {
+TriangleArray::TriangleArray(vec* vertices, int vertexCount, int* indices, int indexCount, vec color) {
   this->vertexCount = vertexCount;
   this->indexCount = indexCount;
-
-  this->vertices = vertices;
-  this->indices = indices;
-
   this->color = color;
+
+  this->vertices = new vec[vertexCount];
+  this->indices = new int[indexCount];
+
+  for (int i = 0; i < vertexCount; i++)
+    this->vertices[i] = vertices[i];
+
+  for (int i = 0; i < indexCount; i++)
+    this->indices[i] = indices[i];
 }
 
 TriangleArray::TriangleArray() {}
+
+TriangleArray::~TriangleArray() {
+  //delete[] this->vertices;
+  //delete[] this->indices;
+}
 
 std::vector<Triangle> TriangleArray::getTriangles() {
   int triangleIndex = 0;
@@ -61,4 +73,14 @@ std::vector<Triangle> TriangleArray::getTriangles() {
   }
 
   return triangles;
+}
+
+TriangleArray cuboid(vec pos, vec dx, vec dy, vec dz, vec color) {
+
+  vec verts[] = { pos, pos + dz, pos + dx + dz, pos + dx,
+                  pos + dy, pos + dy + dz, pos + dx + dy + dz, pos + dx + dy };
+
+  int indices[] = { 0,1,3,  2,1,3,  4,5,6,  4,7,6,  0,3,7,  0,4,7,  1,2,6,  1,5,6,  3,2,6,  3,6,7,  0,1,5,  0,4,5 };
+
+  return TriangleArray(verts, 8, indices, 36, color);
 }

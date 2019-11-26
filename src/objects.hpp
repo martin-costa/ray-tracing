@@ -88,5 +88,9 @@ public:
 
   TriangleArray();
 
+  ~TriangleArray();
+
   std::vector<Triangle> getTriangles();
 };
+
+TriangleArray cuboid(Vector3d pos, Vector3d dx, Vector3d dy, Vector3d dz, Vector3d color);

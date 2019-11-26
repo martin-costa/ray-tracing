@@ -11,15 +11,25 @@
 #define WIDTH 1980
 #define HEIGHT 1080
 
+#define SCENE_IDX 1
+
 int main();
 
-void launch();
-
-void mainLoop();
+void mainLoop(sf::Event evnt);
 
 sf::Window window;
 
 // create a scene and a view
 Scene scene(WIDTH, HEIGHT);
 
-Camera view(Vector3d(-200, 400, 200));
+Camera view;
+
+// create object scenes
+void createScene(int i);
+void updateScene(int i);
+
+void createScene1();
+void updateScene1();
+
+void createScene2();
+void updateScene2();

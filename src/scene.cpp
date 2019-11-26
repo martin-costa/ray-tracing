@@ -53,17 +53,23 @@ void Camera::moveForward(double x) {
 //// __ scene used to define the space __ ////
 
 Scene::Scene(int width, int height) {
+
+  // objects
   this->spheres = std::vector<Sphere>(0);
+  this->triangles = std::vector<Triangle>(0);
+
+  // lights
+  this->dirLights = std::vector<DirectionalLight>(0);
+  this->pointLights = std::vector<PointLight>(0);
 
   this->width = width;
   this->height = height;
 
   rayTracingShader.loadFromFile("raytracingshader.fs", sf::Shader::Fragment);
+  sky.loadFromFile("skydome.png");
 }
 
 void Scene::drawScene(Camera cam) {
-
-  sf::Shader::bind(&rayTracingShader);
 
   // create a timer to evolve time in shader
   static int time = 0;
@@ -153,6 +159,9 @@ void Scene::drawScene(Camera cam) {
   rayTracingShader.setUniformArray("dirLightsColors", dirLightsColors, dirLightCount);
   rayTracingShader.setUniformArray("pointLightsColors", pointLightsColors, pointLightCount);
 
+  // pass texture
+  rayTracingShader.setUniform("sky", sky);
+
   // free the memory
   delete[] spherePositions;
   delete[] sphereRadii;
@@ -168,11 +177,27 @@ void Scene::drawScene(Camera cam) {
   delete[] dirLightsColors;
   delete[] pointLightsColors;
 
+  // bind the shader
+
+  sf::Shader::bind(&rayTracingShader);
+
+  //sf::Shader l;
+  //l.loadFromFile("testshader.fs", sf::Shader::Fragment);
+  //l.setUniform("sky", sky);
+  //sf::Shader::bind(&l);
+
   glBegin(GL_QUADS);
 
+ // glTexCoord2f(0.f, 1.f);
   glVertex2i(-width / 2, -height/2);
+
+  //glTexCoord2f(1.f, 1.f);
   glVertex2i(width / 2, -height / 2);
+
+  //glTexCoord2f(1.f, 0.f);
   glVertex2i(width / 2, height / 2);
+
+  //glTexCoord2f(0.f, 0.f);
   glVertex2i(-width / 2, height / 2);
 
   glEnd();
