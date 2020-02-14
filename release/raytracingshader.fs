@@ -66,6 +66,11 @@ uniform vec3 pointLightsColors[maxLights];
 
 // textures
 uniform sampler2D sky;
+uniform sampler2D grass;
+
+uniform vec3 grassMean;
+
+uniform bool useTextures;
 
 //// ---------------- ////
 //// global variables ////
@@ -180,7 +185,7 @@ vec3 getNormalFloor() {
 
 // sqaure tile pattern
 int squareTiles(float x, float y) {
-  float s = 5; int r = 4;
+  float s = 25; int r = 2;
   vec2 pos = vec2(int(x/s) % r, int(y/s) % r);
   int t = 0;
 
@@ -197,6 +202,19 @@ int squareTiles(float x, float y) {
 int concentricCircles(float x, float y) {
   if (int(sqrt(x*x + y*y) - time) % 51 > 25) return 1;
   return 0;
+}
+
+// get texture
+vec3 getFloorColor(float x, float y) {
+  float s = 25;
+
+  vec2 pos = vec2(mod(x/s, 1.0), mod(y/s, 1.0));
+
+  float k = 3000.0 / 11.0;
+
+  float f = 1.0 / ( 1.0 + k*exp(-d/k) );
+
+  return texture2D(grass, pos) * (1 - f) + grassMean * f;
 }
 
 //// __ methods for void __ ////
@@ -302,7 +320,8 @@ bool traceRay() {
 
   // if ray goes into void
   if (objectType == VOID_OBJ) {
-    totalColor[casts] = getSky();
+	totalColor[casts] = voidColor;
+    if (useTextures) totalColor[casts] = getSky();
 	return false;
   }
 
@@ -313,8 +332,9 @@ bool traceRay() {
   if (objectType == SPHERE_OBJ) objColor = sphereColors[index];
   if (objectType == TRIANGLE_OBJ) objColor = triangleColors[index];
   if (objectType == FLOOR_OBJ) {
-	if (squareTiles(rayEnd.x, rayEnd.z) == 0) objColor = vec3(0, 0.8, 0.8);
-	else objColor = vec3(0.8, 0.3, 0);
+	if (squareTiles(rayEnd.x, rayEnd.z) == 0) objColor = vec3(0, 0, 0);
+	else objColor = vec3(0.7, 0.7, 0.7);
+	if (useTextures) objColor = getFloorColor(rayEnd.x, rayEnd.z);
   }
 
   // get the light coming from directed lights
@@ -331,7 +351,7 @@ bool traceRay() {
   // add up the direct color at the point
   totalColor[casts] = colorFromLight + objColor * diffuse;
 
-  if (objectType == FLOOR_OBJ) return false; // floor non reflective
+  //if (objectType == FLOOR_OBJ) return false; // floor non reflective
 
   // update the direction and the origin of the ray
   rayDir = rayDir - normal * 2 * dot(normal , rayDir);

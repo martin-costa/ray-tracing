@@ -88,15 +88,15 @@ void mainLoop(sf::Event evnt) {
   static KeyDetector keyY(sf::Keyboard::Y);
   if (keyY.typed()) scene.addObject(PointLight(view.pos));
 
-  if (sf::Mouse::isButtonPressed(sf::Mouse::Middle) && scene.dirLights.empty()) scene.addObject(DirectionalLight(vec(-1,-1,1)));
+  //if (sf::Mouse::isButtonPressed(sf::Mouse::Middle) && scene.dirLights.empty()) scene.addObject(DirectionalLight(vec(0.5, -1, 1)));
 
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add) && !scene.dirLights.empty()) scene.dirLights[0].dir = scene.dirLights[0].dir.rotateAbout(vec(1, -1, 0), -0.05);
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract) && !scene.dirLights.empty()) scene.dirLights[0].dir = scene.dirLights[0].dir.rotateAbout(vec(1, -1, 0), 0.05);
 
-  if (!scene.dirLights.empty()) {
-    float f = vec(0, -1, 0).dot(scene.dirLights[0].dir);
-    if (f > 0) scene.voidColor = vec(0, 0.7, 1) * f;
-  }
+  //if (!scene.dirLights.empty()) {
+  //  float f = vec(0, -1, 0).dot(scene.dirLights[0].dir);
+  //  if (f > 0) scene.voidColor = vec(0, 0.7, 1) * f;
+  //}
 
   scene.drawScene(view);
 }
@@ -104,31 +104,27 @@ void mainLoop(sf::Event evnt) {
 //// __ SCENE 1 __ ////
 void createScene1() {
 
-  rand(); // dont like base
+  // square
+  scene.addObject(cuboid(vec(-20, 160, -20), vec(40, 0, 0), vec(0, 40, 0), vec(0, 0, 40), vec(0, 0.7, 0.7)));
+  //scene.addObject(cuboid(vec(-120, 80, -120), vec(40, 0, 0), vec(0, 40, 0), vec(0, 0, 40), vec(0, 0.7, 0.7)));
+  //scene.addObject(cuboid(vec(-60, 160, -60), vec(40, 0, 0), vec(0, 40, 0), vec(0, 0, 70), vec(0.7, 0.4, 0)));
 
-  scene.addObject(Sphere(vec(0, 200, 0), 35, vec(1, 1, 1)));
   for (int i = 0; i < 20; i++) {
     scene.addObject(Sphere(vec(70 * sin(i * 2 * PI / 20), 0, 70 * cos(i * 2 * PI / 20)), 10, vec(abs(cos(i * 2 * PI / 20)), abs(cos(i * 2 * PI / 20)), abs(sin(i * 2 * PI / 20)))));
   }
-  for (int i = 0; i < 50; i++) {
+
+  scene.addObject(Sphere(vec(0, 250, 0), 35, vec(1, 1, 1)));
+
+  for (int i = 0; i < 30; i++) {
     scene.addObject(Sphere(vec(rand() % 400 - 200, rand() % 400, rand() % 400 - 200), rand() % 15 + 5, vec((rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f)));
   }
 
-  // square
-  scene.addObject( cuboid(vec(-20, 80, -20), vec(40, 0, 0), vec(0, 40, 0), vec(0, 0, 40), vec(0, 0.7, 0.7)) );
+  scene.addObject(PointLight(vec(0, 30, 1), vec(1, 0, 0)));
+  scene.addObject(PointLight(vec(cos(2 * PI / 3), 30, sin(2 * PI / 3)), vec(0, 1, 0)));
+  scene.addObject(PointLight(vec(cos(4 * PI / 3), 30, sin(4 * PI / 3)), vec(0, 0, 1)));
 
-  //scene.addObject(PointLight(vec(0, 30, 1), vec(1, 0, 0)));
-  //scene.addObject(PointLight(vec(cos(2 * PI / 3), 30, sin(2 * PI / 3)), vec(0, 1, 0)));
-  //scene.addObject(PointLight(vec(cos(4 * PI / 3), 30, sin(4 * PI / 3)), vec(0, 0, 1)));
-
-  // box of spheres
-  //for (int i = 0; i < 5; i++) {
-  //  for (int j = 0; j < 5; j++) {
-  //    for (int k = 0; k < 5; k++) {
-  //      scene.addObject(Sphere(vec(10 * i, 10*k + 75, 10 * j), 5, vec(i*0.2, j*0.2, k*0.2)));
-  //    }
-  //  }
-  //}
+  // walls
+  //scene.addObject(cuboid(vec(-200, -20, -200), vec(400, 0, 0), vec(0, 420, 0), vec(0, 0, 400), vec(0.3, 0.3, 0.3)));
 }
 
 void updateScene1() {
@@ -136,25 +132,21 @@ void updateScene1() {
   static float theta = 0;
   theta += 0.01;
 
-  int y = 100;
-  for (int i = 0; i < 12; i++) {
-    for (int j = 0; j < 3; j++) {
-      scene.triangles[i].p[j] = (scene.triangles[i].p[j] - vec(0, y, 0)).rotX(0.02 * sin(theta)) + vec(0, y, 0);
-      scene.triangles[i].p[j] = (scene.triangles[i].p[j] - vec(0, y, 0)).rotY(0.02 * cos(theta * 1.1)) + vec(0, y, 0);
-      scene.triangles[i].p[j] = (scene.triangles[i].p[j] - vec(0, y, 0)).rotZ(0.02 * sin(theta * 0.8)) + vec(0, y, 0);
-    }
-  }
+  scene.rotateObj(0, 0.02 * cos(theta), 0.02 * -sin(theta), 0.02 * sin(theta / 3));
+  //scene.rotateObj(1, 0.02 * cos(theta), 0.02 * sin(theta), 0.02 * sin(theta / 3));
+  //scene.rotateObj(2, 0, 0.02 * sin(theta), 0.02 * sin(theta));
 
-  for (int i = 1; i <= 20; i++) {
-    scene.spheres[i].pos.y = 30 * (cos(theta * 2 + 2 * i * PI / 20)) + y;
-    scene.spheres[i].pos.x = 70 * (cos(theta * 4 + 2 * i * PI / 20));
-    scene.spheres[i].pos.z = 70 * (sin(theta * 4 + 2 * i * PI / 20));
+  int y = 250;
+  for (int i = 0; i < 20; i++) {
+    scene.spheres[i].pos.y = y/2 * (cos(theta * 2 + 2 * i * PI / 5)) + y/2;
+    //scene.spheres[i].pos.x = 70 * (cos(theta * 4 + 2 * i * PI / 20));
+    //scene.spheres[i].pos.z = 70 * (sin(theta * 4 + 2 * i * PI / 20));
   }
 
   float d = 100 * cos(theta);
-  //scene.pointLights[0].pos = vec(d * cos(0 * PI / 3 + 2 * theta), 30, d * sin(0 * PI / 3 + 2 * theta));
-  //scene.pointLights[1].pos = vec(d * cos(2 * PI / 3 + 2 * theta), 30, d * sin(2 * PI / 3 + 2 * theta));
-  //scene.pointLights[2].pos = vec(d * cos(4 * PI / 3 + 2 * theta), 30, d * sin(4 * PI / 3 + 2 * theta));
+  scene.pointLights[0].pos = vec(d * cos(0 * PI / 3 + 2 * theta), 30, d * sin(0 * PI / 3 + 2 * theta));
+  scene.pointLights[1].pos = vec(d * cos(2 * PI / 3 + 2 * theta), 30, d * sin(2 * PI / 3 + 2 * theta));
+  scene.pointLights[2].pos = vec(d * cos(4 * PI / 3 + 2 * theta), 30, d * sin(4 * PI / 3 + 2 * theta));
 }
 
 //// __ SCENE 2 __ ////
@@ -184,7 +176,6 @@ void createScene2() {
   //scene.addObject(Triangle(vec(-50, 0, -175), vec(-50, 150, -175), vec(50, 150, -175), vec(0, 0, 0)));
 
   scene.addObject(Sphere(vec(160, 160, 100), 75, vec(0.5, 0.5, 0.5)));
-
 }
 
 void updateScene2() {

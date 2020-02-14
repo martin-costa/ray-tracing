@@ -39,9 +39,11 @@ Triangle::Triangle(vec p1, vec p2, vec p3, vec color) {
 
 Triangle::Triangle() {}
 
-TriangleArray::TriangleArray(vec* vertices, int vertexCount, int* indices, int indexCount, vec color) {
+TriangleArray::TriangleArray(vec* vertices, int vertexCount, int* indices, int indexCount, vec pos, vec color) {
   this->vertexCount = vertexCount;
   this->indexCount = indexCount;
+
+  this->pos = pos;
   this->color = color;
 
   this->vertices = new vec[vertexCount];
@@ -56,6 +58,7 @@ TriangleArray::TriangleArray(vec* vertices, int vertexCount, int* indices, int i
 
 TriangleArray::TriangleArray() {}
 
+// fix memory leaks
 TriangleArray::~TriangleArray() {
   //delete[] this->vertices;
   //delete[] this->indices;
@@ -82,5 +85,7 @@ TriangleArray cuboid(vec pos, vec dx, vec dy, vec dz, vec color) {
 
   int indices[] = { 0,1,3,  2,1,3,  4,5,6,  4,7,6,  0,3,7,  0,4,7,  1,2,6,  1,5,6,  3,2,6,  3,6,7,  0,1,5,  0,4,5 };
 
-  return TriangleArray(verts, 8, indices, 36, color);
+  vec centre = pos + (dx + dy + dz)*0.5;
+
+  return TriangleArray(verts, 8, indices, 36, centre, color);
 }

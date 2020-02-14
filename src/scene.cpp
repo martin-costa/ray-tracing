@@ -58,6 +58,8 @@ Scene::Scene(int width, int height) {
   this->spheres = std::vector<Sphere>(0);
   this->triangles = std::vector<Triangle>(0);
 
+  this->objects = std::vector<std::tuple<Vector3d, int, int, int, int>>(0);
+
   // lights
   this->dirLights = std::vector<DirectionalLight>(0);
   this->pointLights = std::vector<PointLight>(0);
@@ -66,7 +68,11 @@ Scene::Scene(int width, int height) {
   this->height = height;
 
   rayTracingShader.loadFromFile("raytracingshader.fs", sf::Shader::Fragment);
-  sky.loadFromFile("skydome.png");
+
+  //sky.loadFromFile("skydome.png");
+  //grass.loadFromFile("grassmc.png");
+
+  //grassMean = getTextureMean(grass);
 }
 
 void Scene::drawScene(Camera cam) {
@@ -74,7 +80,7 @@ void Scene::drawScene(Camera cam) {
   // create a timer to evolve time in shader
   static int time = 0;
   time++;
-  rayTracingShader.setUniform("time", time);
+  //rayTracingShader.setUniform("time", time);
 
   // set scene size and camera
   rayTracingShader.setUniform("width", width);
@@ -160,7 +166,11 @@ void Scene::drawScene(Camera cam) {
   rayTracingShader.setUniformArray("pointLightsColors", pointLightsColors, pointLightCount);
 
   // pass texture
-  rayTracingShader.setUniform("sky", sky);
+  //rayTracingShader.setUniform("useTextures", false);
+  //rayTracingShader.setUniform("sky", sky);
+  //rayTracingShader.setUniform("grass", grass);
+
+  //rayTracingShader.setUniform("grassMean", grassMean.toSf());
 
   // free the memory
   delete[] spherePositions;
@@ -178,13 +188,7 @@ void Scene::drawScene(Camera cam) {
   delete[] pointLightsColors;
 
   // bind the shader
-
   sf::Shader::bind(&rayTracingShader);
-
-  //sf::Shader l;
-  //l.loadFromFile("testshader.fs", sf::Shader::Fragment);
-  //l.setUniform("sky", sky);
-  //sf::Shader::bind(&l);
 
   glBegin(GL_QUADS);
 
@@ -203,20 +207,77 @@ void Scene::drawScene(Camera cam) {
   glEnd();
 }
 
-// add objects to the scene
-void Scene::addObject(Sphere sphere) { spheres.push_back(sphere); }
+// interact with scene
+void Scene::rotateObj(int i, float dx, float dy, float dz) {
 
-void Scene::addObject(Triangle triangle) { triangles.push_back(triangle); }
+  std::tuple<Vector3d, int, int, int, int> tup = objects[i];
+
+  Vector3d pos = std::get<0>(tup);
+
+  for (int i = 0; i < std::get<2>(tup); i++) {
+    spheres[std::get<1>(tup) + i].pos = (pos - spheres[std::get<1>(tup) + i].pos).rotX(dx) + pos;
+    spheres[std::get<1>(tup) + i].pos = (pos - spheres[std::get<1>(tup) + i].pos).rotY(dy) + pos;
+    spheres[std::get<1>(tup) + i].pos = (pos - spheres[std::get<1>(tup) + i].pos).rotZ(dz) + pos;
+  }
+
+  for (int i = 0; i < std::get<4>(tup); i++) {
+    for (int j = 0; j < 3; j++) {
+      triangles[std::get<3>(tup) + i].p[j] = (pos - triangles[std::get<3>(tup) + i].p[j]).rotX(dx) + pos;
+      triangles[std::get<3>(tup) + i].p[j] = (pos - triangles[std::get<3>(tup) + i].p[j]).rotY(dy) + pos;
+      triangles[std::get<3>(tup) + i].p[j] = (pos - triangles[std::get<3>(tup) + i].p[j]).rotZ(dz) + pos;
+    }
+  }
+}
+
+// add objects to the scene
+void Scene::addObject(Sphere sphere) { 
+  addToList(sphere.pos, spheres.size(), 1, 0, 0);
+  spheres.push_back(sphere);
+}
+
+void Scene::addObject(Triangle triangle) { 
+  addToList(triangle.p[0], 0, 0, triangles.size(), 1);
+  triangles.push_back(triangle);
+}
 
 void Scene::addObject(TriangleArray triangleArray) { 
 
   std::vector<Triangle> tris = triangleArray.getTriangles();
+  addToList(triangleArray.pos, 0, 0, triangles.size(), tris.size());
 
   for (int i = 0; i < tris.size(); i++) {
-    addObject(tris[i]);
+    triangles.push_back(tris[i]);
   }
 }
 
-void Scene::addObject(DirectionalLight dirLight) { dirLights.push_back(dirLight); }
+void Scene::addObject(DirectionalLight dirLight) { 
+  dirLights.push_back(dirLight);
+}
 
-void Scene::addObject(PointLight pointLight) { pointLights.push_back(pointLight); }
+void Scene::addObject(PointLight pointLight) { 
+  pointLights.push_back(pointLight);
+}
+
+void Scene::addToList(Vector3d pos, int s_start, int s_count, int t_start, int t_count) {
+  objects.push_back(std::tuple<Vector3d, int, int, int, int>(pos, s_start, s_count, t_start, t_count));
+}
+
+Vector3d getTextureMean(sf::Texture tex) {
+
+  sf::Image image = tex.copyToImage();
+
+  sf::Color temp = sf::Color(0, 0, 0);
+  float r = 0.0, g = 0.0, b = 0.0;
+  
+  for (int i = 0; i < image.getSize().x; i++) {
+    for (int j = 0; j < image.getSize().y; j++) {
+      temp = image.getPixel(i, j);
+
+      r += temp.r;
+      g += temp.g;
+      b += temp.b;
+    }
+  }
+
+  return Vector3d(r,g,b) / (float)(image.getSize().x * image.getSize().y * 255);
+}

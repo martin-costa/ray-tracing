@@ -22,7 +22,7 @@ sf::Window window;
 // create a scene and a view
 Scene scene(WIDTH, HEIGHT);
 
-Camera view;
+Camera view(Vector3d(160, 350, 160));
 
 // create object scenes
 void createScene(int i);

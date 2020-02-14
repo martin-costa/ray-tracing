@@ -4,7 +4,6 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
-
 #include <vector>
 
 #include "vector.hpp"
@@ -55,20 +54,28 @@ class Scene {
    int height;
 
   sf::Shader rayTracingShader;
+
+  // textures
   sf::Texture sky;
+  sf::Texture grass;
+
+  Vector3d grassMean;
 
 public:
 
   // settings
-  float attenuation = 5000;
-  float reflectivity = 1;
-  float diffuse = 0.1;
+  float attenuation = 25000;
+  float reflectivity = 0.7;
+  float diffuse = 0.04;
 
   Vector3d voidColor = Vector3d(0, 0.02, 0.04);
 
   // objects
   std::vector<Sphere> spheres;
   std::vector<Triangle> triangles;
+
+  // store objects as pos, s_start, s_count, t_start, t_count
+  std::vector<std::tuple<Vector3d, int, int, int, int>> objects;
 
   // lights
   std::vector<DirectionalLight> dirLights;
@@ -78,6 +85,9 @@ public:
 
   void drawScene(Camera cam);
 
+  // interact with scene
+  void rotateObj(int i, float dx, float dy, float dz);
+
   // add objects to the scene
   void addObject(Sphere sphere);
   void addObject(Triangle triangle);
@@ -85,4 +95,8 @@ public:
 
   void addObject(DirectionalLight dirLights);
   void addObject(PointLight pointLights);
+
+  void addToList(Vector3d pos, int s_start, int s_count, int t_start, int t_count);
 };
+
+Vector3d getTextureMean(sf::Texture tex);

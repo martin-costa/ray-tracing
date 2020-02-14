@@ -82,9 +82,11 @@ public:
 
   int indexCount;
 
+  Vector3d pos;
+
   Vector3d color;
 
-  TriangleArray(Vector3d* vertices, int vertexCount, int* indices, int indexCount, Vector3d color);
+  TriangleArray(Vector3d* vertices, int vertexCount, int* indices, int indexCount, Vector3d pos, Vector3d color);
 
   TriangleArray();
 
